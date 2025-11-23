@@ -1,6 +1,5 @@
 import socket
 import ssl
-import urllib.parse
 
 class URL:
   def __init__(self, url):
@@ -19,7 +18,7 @@ class URL:
       self.host, port = self.host.split(":", 1)
       self.port = int(port)
   
-  def request(self, max_redirects=5):
+  def request(self):
     s = socket.socket(
       family=socket.AF_INET,
       type=socket.SOCK_STREAM,
@@ -50,51 +49,10 @@ class URL:
       header, value = line.split(":", 1)
       response_headers[header.casefold()] = value.strip()
 
-    # Handle redirects (3xx)
-    status_int = int(status)
-    if 300 <= status_int < 400:
-      if max_redirects <= 0:
-        s.close()
-        raise RuntimeError("too many redirects")
-
-      location = response_headers.get("location")
-      if location:
-        # Build current absolute URL for resolving relative redirects
-        current_url = "{}://{}{}".format(self.scheme, self.host if self.port in (80, 443) else (self.host + ":%d" % self.port), self.path)
-        new_url = urllib.parse.urljoin(current_url, location)
-
-        parsed = urllib.parse.urlparse(new_url)
-        if parsed.scheme not in ("http", "https"):
-          # Do not follow non-http(s) redirects
-          pass
-        else:
-          s.close()
-          print("Redirecting to:", new_url)
-          return URL(new_url).request(max_redirects - 1)
-
     assert "transfer-encoding" not in response_headers
     assert "content-encoding" not in response_headers
 
     body = response.read()
     s.close()
 
-    return 
-
-def show(body):
-  in_tag = False
-  for c in body:
-    if c == "<":
-      in_tag = True
-    elif c == ">":
-      in_tag = False
-    elif not in_tag:
-      print(c, end="")
-
-def load(url):
-  body = url.request()
-  show(body)
-
-if __name__ == "__main__":
-  import sys
-  load(URL(sys.argv[1]))
-    
+    return body
