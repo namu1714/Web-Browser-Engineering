@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__))) # Adjust the import path
 
-from url import URL
+from src.url import URL
 import tkinter
 
 WIDTH, HEIGHT = 800, 600
