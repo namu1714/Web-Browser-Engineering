@@ -6,20 +6,38 @@ A step-by-step implementation of a web browser from scratch, following the book 
 
 ```
 web-browser-engineering/
-├── browser.py          # Main browser implementation (evolves with each chapter)
+├── src/                # Core browser implementation
+│   ├── main.py         # Main entry point
+│   ├── browser.py      # Browser class implementation
+│   ├── url.py          # URL handling
+│   ├── layout.py       # Layout engine
+│   └── globals.py      # Global configurations
 ├── chapter01/          # Chapter 1 exercises
+│   ├── browser01-ex1.py
+│   ├── browser01-ex5.py
+│   └── ...
 ├── chapter02/          # Chapter 2 exercises
-└── ...
+│   ├── browser02-ex1.py
+│   ├── browser02-ex2.py
+│   └── ...
+└── README.md
 ```
 
 ## Overview
 
 This project builds a working web browser incrementally, starting from basic HTTP requests and gradually adding features like HTML parsing, layout, rendering, and JavaScript execution.
 
-### Main File: `browser.py`
+### Core Implementation (`src/`)
 
-The `browser.py` file is the core implementation that grows as you progress through the book. It demonstrates:
+The `src/` directory contains the modular browser implementation:
 
+- **`main.py`**: Entry point for running the browser
+- **`browser.py`**: Core Browser class with rendering and event handling
+- **`url.py`**: URL parsing and HTTP request handling
+- **`layout.py`**: Layout engine for positioning elements
+- **`globals.py`**: Global configuration and constants
+
+This modular structure demonstrates:
 - HTTP protocol implementation using raw sockets
 - HTML parsing and DOM construction
 - Layout engine
@@ -43,7 +61,14 @@ Each `chapterXX/` directory contains solutions to exercises from that chapter, a
 ### Running the Browser
 
 ```bash
-python browser.py
+cd src
+python3 main.py
+```
+
+Or from the root directory:
+
+```bash
+python3 src/main.py
 ```
 
 ### Working on Exercises
@@ -52,7 +77,7 @@ Navigate to the relevant chapter folder:
 
 ```bash
 cd chapter01
-python exercise01.py
+python3 browser01-ex1.py
 ```
 
 ## Learning Approach
