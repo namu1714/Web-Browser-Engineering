@@ -38,6 +38,7 @@ The `src/` directory contains the modular browser implementation:
 - **`globals.py`**: Global configuration and constants
 
 This modular structure demonstrates:
+
 - HTTP protocol implementation using raw sockets
 - HTML parsing and DOM construction
 - Layout engine
