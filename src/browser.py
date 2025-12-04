@@ -20,9 +20,10 @@ class Browser:
     
   def load(self, url):
     body = url.request()
-    nodes = HTMLParser(body).parse()
-    print_tree(nodes)  # For debugging: print the parse tree
-    self.display_list = Layout(nodes).display_list
+    self.nodes = HTMLParser(body).parse()
+    # print_tree(self.nodes) # Debug: print the parse tree
+    
+    self.display_list = Layout(self.nodes).display_list
     self.compute_max_scroll() 
     self.draw()
 
