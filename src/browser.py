@@ -1,7 +1,8 @@
 import tkinter
 
 from globals import HEIGHT, SCROLL_STEP, VSTEP, WIDTH
-from layout import Layout, lex
+from layout import Layout
+from parser import HTMLParser, print_tree
 
 
 class Browser:
@@ -19,8 +20,9 @@ class Browser:
     
   def load(self, url):
     body = url.request()
-    tokens = lex(body)
-    self.display_list = Layout(tokens).display_list
+    nodes = HTMLParser(body).parse()
+    print_tree(nodes)  # For debugging: print the parse tree
+    self.display_list = Layout(nodes).display_list
     self.compute_max_scroll() 
     self.draw()
 
