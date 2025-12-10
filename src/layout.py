@@ -6,9 +6,10 @@ from parser import Text
 FONTS = {}
 
 class Layout:
-  def __init__(self, tree):
+  def __init__(self, tree, width=WIDTH):
     self.display_list = []
     self.line = []
+    self.width = width
 
     self.cursor_x = HSTEP
     self.cursor_y = VSTEP
@@ -57,7 +58,7 @@ class Layout:
   def word(self, word):
     font = get_font(self.size, self.weight, self.style)
     w = font.measure(word)
-    if self.cursor_x + w > WIDTH - HSTEP:
+    if self.cursor_x + w > self.width - HSTEP:
       self.flush()
     self.line.append((self.cursor_x, word, font))
     self.cursor_x += w + font.measure(" ")

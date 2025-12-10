@@ -2,7 +2,7 @@ import tkinter
 
 from globals import HEIGHT, SCROLL_STEP, VSTEP, WIDTH
 from layout import Layout
-from parser import HTMLParser, print_tree
+from parser import HTMLParser
 
 
 class Browser:
@@ -17,13 +17,14 @@ class Browser:
     self.max_scroll = 0
     self.window.bind("<Down>", self.scrolldown)
     self.window.bind("<Up>", self.scrollup)
+    self.window.bind("<Configure>", self.on_resize)
     
   def load(self, url):
     body = url.request()
     self.nodes = HTMLParser(body).parse()
     # print_tree(self.nodes) # Debug: print the parse tree
-    
-    self.display_list = Layout(self.nodes).display_list
+
+    self.display_list = Layout(self.nodes, self.width).display_list
     self.compute_max_scroll() 
     self.draw()
 
@@ -52,4 +53,10 @@ class Browser:
       self.scroll = 0
     self.draw()
 
-
+  def on_resize(self, e):
+    self.width = e.width
+    self.height = e.height
+    if hasattr(self, 'nodes'):
+      self.display_list = Layout(self.nodes, self.width).display_list
+      self.compute_max_scroll()
+      self.draw()
