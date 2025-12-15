@@ -3,6 +3,11 @@ import ssl
 
 class URL:
   def __init__(self, url):
+    self.view_source = False
+    if url.startswith("view-source:"):
+      self.view_source = True
+      url = url[len("view-source:"):]
+    
     self.scheme, url = url.split("://", 1)
     if self.scheme == "http":
       self.port = 80

@@ -143,3 +143,76 @@ class HTMLParser:
       parent = self.unfinished[-1]
       parent.children.append(node)
     return self.unfinished.pop()
+
+
+class ViewSourceParser(HTMLParser):
+  def __init__(self, body):
+    super().__init__(body)
+    self.source_content = []
+  
+  def parse(self):
+    text = "" 
+    in_tag = False
+    i = 0
+
+    while i < len(self.body):
+      c = self.body[i]
+
+      if c == "<" and i + 3 < len(self.body) and self.body[i:i+4] == "<!--":
+        if text and not in_tag:
+          self.source_content.append(("text", text))
+          text = ""
+        end = self.body.find("-->", i + 4)
+        if end != -1:
+          self.source_content.append(("tag", self.body[i:end+3]))
+          i = end + 3
+          continue
+        else:
+          break
+      elif c == "<":
+        in_tag = True
+        if text: 
+          # Text content before tag - will be made bold
+          self.source_content.append(("text", text))
+        text = "<"
+      elif c == ">":
+        in_tag = False
+        text += c
+        # Tag content - normal font
+        self.source_content.append(("tag", text))
+        text = ""
+      else:
+        text += c
+      i += 1
+      
+    if text:
+      if in_tag:
+        self.source_content.append(("tag", text))
+      else:
+        self.source_content.append(("text", text))
+    
+    return self.create_tree()
+  
+  def create_tree(self):
+    # Create a document tree for view-source mode
+    # Wrap everything in <pre> to preserve whitespace and newlines
+    html = Element("html", {}, None)
+    body = Element("body", {}, html)
+    pre = Element("pre", {}, body)
+    
+    html.children.append(body)
+    body.children.append(pre)
+    
+    for content_type, content in self.source_content:
+      if content_type == "text":
+        # Text content - wrap in <b> tag for bold
+        b_elem = Element("b", {}, pre)
+        text_node = Text(content, b_elem)
+        b_elem.children.append(text_node)
+        pre.children.append(b_elem)
+      else:  # "tag"
+        # Tag content - normal font, just add as text
+        text_node = Text(content, pre)
+        pre.children.append(text_node)
+    
+    return html

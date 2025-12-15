@@ -11,7 +11,8 @@ web-browser-engineering/
 │   ├── browser.py      # Browser class implementation
 │   ├── url.py          # URL handling
 │   ├── layout.py       # Layout engine
-│   └── globals.py      # Global configurations
+│   ├── globals.py      # Global configurations
+│   └── server/         # Test web server
 ├── chapter01/          # Chapter 1 exercises
 │   ├── browser01-ex1.py
 │   ├── browser01-ex5.py
@@ -45,6 +46,10 @@ This modular structure demonstrates:
 - Rendering pipeline
 - (More features added chapter by chapter)
 
+### Test Server (`src/server/`)
+
+The `server/` directory contains a local web server for testing the browser implementation with various HTML pages and scenarios.
+
 ### Chapter Folders
 
 Each `chapterXX/` directory contains solutions to exercises from that chapter, allowing you to:
@@ -71,6 +76,15 @@ Or from the root directory:
 ```bash
 python3 src/main.py
 ```
+
+### Running the Test Server
+
+```bash
+cd src/server
+python3 server.py
+```
+
+Then navigate your browser to `http://localhost:8000` to test various pages.
 
 ### Working on Exercises
 
