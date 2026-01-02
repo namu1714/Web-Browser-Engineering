@@ -1,9 +1,8 @@
 import tkinter
 
 from globals import HEIGHT, SCROLL_STEP, VSTEP, WIDTH
-from layout import Layout
+from layout import DocumentLayout
 from parser import HTMLParser
-
 
 class Browser:
   def __init__(self):
@@ -17,34 +16,30 @@ class Browser:
     self.max_scroll = 0
     self.window.bind("<Down>", self.scrolldown)
     self.window.bind("<Up>", self.scrollup)
-    self.window.bind("<Configure>", self.on_resize)
     
   def load(self, url):
     body = url.request()
     self.nodes = HTMLParser(body).parse()
-    # print_tree(self.nodes) # Debug: print the parse tree
 
-    self.display_list = Layout(self.nodes, self.width).display_list
-    self.compute_max_scroll() 
+    self.document = DocumentLayout(self.nodes)
+    self.document.layout()
+    self.display_list = []
+    paint_tree(self.document, self.display_list)
+
     self.draw()
-
-  def compute_max_scroll(self):
-    max_y = max(y for _, y, _, _ in self.display_list)
-    self.max_scroll = max_y - self.height + VSTEP
 
   def draw(self):
     self.canvas.delete("all")
-    for x, y, word, font in self.display_list:
-      if y - self.scroll > self.height:
+    for cmd in self.display_list:
+      if cmd.top > self.scroll + HEIGHT:
         continue
-      if y + VSTEP < self.scroll:
+      if cmd.bottom < self.scroll:
         continue
-      self.canvas.create_text(x, y - self.scroll, text=word, font=font, anchor="nw")
+      cmd.execute(self.scroll, self.canvas)
   
   def scrolldown(self, e):
-    self.scroll += SCROLL_STEP
-    if self.scroll > self.max_scroll:
-      self.scroll = self.max_scroll
+    max_y = max(self.document.height + 2*VSTEP - HEIGHT, 0)
+    self.scroll = min(self.scroll + SCROLL_STEP, max_y)
     self.draw()
 
   def scrollup(self, e):
@@ -53,10 +48,8 @@ class Browser:
       self.scroll = 0
     self.draw()
 
-  def on_resize(self, e):
-    self.width = e.width
-    self.height = e.height
-    if hasattr(self, 'nodes'):
-      self.display_list = Layout(self.nodes, self.width).display_list
-      self.compute_max_scroll()
-      self.draw()
+def paint_tree(layout_object, display_list):
+  display_list.extend(layout_object.paint())
+
+  for child in layout_object.children:
+    paint_tree(child, display_list)
