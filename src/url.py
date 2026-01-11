@@ -37,10 +37,13 @@ class URL:
 
     response = s.makefile("r", encoding="utf8", newline="\r\n")
     statusline = response.readline()
+
+    """ debug print
     version, status, explanation = statusline.split(" ", 2)
     print("Version:", version)
     print("Status:", status)
     print("Explanation:", explanation)
+    """
 
     response_headers = {}
     while True:
@@ -56,3 +59,18 @@ class URL:
     s.close()
 
     return body
+
+  def resolve(self, url):
+    if "://" in url:
+      return URL(url)
+    if not url.startswith("/"):
+      dir, _ = self.path.rsplit("/", 1)
+      while url.startswith("../"):
+        _, url = url.split("/", 1)
+        if "/" in dir:
+          dir, _ = dir.rsplit("/", 1)
+      url = dir + "/" + url
+    if url.startswith("//"):
+      return URL(self.scheme + ":" + url)
+    else:
+      return URL(self.scheme + "://" + self.host + ":" + str(self.port) + url)

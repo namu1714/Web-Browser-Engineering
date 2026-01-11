@@ -1,15 +1,18 @@
 import tkinter
 
-from globals import HEIGHT, SCROLL_STEP, VSTEP, WIDTH
+from globals import HEIGHT, SCROLL_STEP, VSTEP, WIDTH, tree_to_list
 from layout import DocumentLayout
-from parser import HTMLParser
+from parser import HTMLParser, Element
+from css import CSSParser, cascade_priority, style
+
+DEFAULT_STYLE_SHEET = CSSParser(open("browser.css").read()).parse()
 
 class Browser:
   def __init__(self):
     self.window = tkinter.Tk()
 
     self.width, self.height = WIDTH, HEIGHT
-    self.canvas = tkinter.Canvas(self.window, width=self.width, height=self.height)
+    self.canvas = tkinter.Canvas(self.window, width=self.width, height=self.height, bg="white")
     self.canvas.pack(fill="both", expand=True)
 
     self.scroll = 0
@@ -21,6 +24,22 @@ class Browser:
     body = url.request()
     self.nodes = HTMLParser(body).parse()
 
+    rules = DEFAULT_STYLE_SHEET.copy()
+    links = [node.attributes["href"]
+             for node in tree_to_list(self.nodes, [])
+             if isinstance(node, Element)
+             and node.tag == "link"
+             and node.attributes.get("rel") == "stylesheet"
+             and "href" in node.attributes]
+    for link in links:
+      style_url = url.resolve(link)
+      try:
+        body = style_url.request()
+      except:
+        continue
+      rules.extend(CSSParser(body).parse())
+
+    style(self.nodes, sorted(rules, key=cascade_priority))
     self.document = DocumentLayout(self.nodes)
     self.document.layout()
     self.display_list = []
