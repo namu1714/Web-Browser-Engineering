@@ -13,6 +13,18 @@ BLOCK_ELEMENTS = [
     "legend", "details", "summary"
 ]
 
+def parse_pixel_value(value):
+    """Parse a CSS pixel value like '100px' and return the numeric value."""
+    if value and isinstance(value, str):
+        if value.endswith('px'):
+            try:
+                return float(value[:-2])
+            except ValueError:
+                return None
+        elif value == 'auto':
+            return None
+    return None
+
 class DocumentLayout:
   def __init__(self, node):
     self.node = node
@@ -60,7 +72,16 @@ class BlockLayout:
   def layout(self):
     # 1. Set position and width of this block
     self.x = self.parent.x
-    self.width = self.parent.width
+
+    # Check if width is specified in CSS styles
+    if hasattr(self.node, 'style') and 'width' in self.node.style:
+      css_width = parse_pixel_value(self.node.style['width'])
+      if css_width is not None:
+        self.width = css_width
+      else:
+        self.width = self.parent.width
+    else:
+      self.width = self.parent.width
 
     if self.previous:
       self.y = self.previous.y + self.previous.height
@@ -91,13 +112,28 @@ class BlockLayout:
     for child in self.children:
       child.layout()
 
-    # 4. Compute height - it depends on children' layout
-    if mode == "block":
-      self.height = sum([
-        child.height for child in self.children
-      ])
+    # 4. Compute height - it depends on children' layout or CSS height
+    # Check if height is specified in CSS styles
+    if hasattr(self.node, 'style') and 'height' in self.node.style:
+      css_height = parse_pixel_value(self.node.style['height'])
+      if css_height is not None:
+        self.height = css_height
+      else:
+        # Use computed height based on content
+        if mode == "block":
+          self.height = sum([
+            child.height for child in self.children
+          ])
+        else:
+          self.height = self.cursor_y
     else:
-      self.height = self.cursor_y
+      # Use computed height based on content
+      if mode == "block":
+        self.height = sum([
+          child.height for child in self.children
+        ])
+      else:
+        self.height = self.cursor_y
 
   def layout_intermediate(self):
     previous = None
@@ -135,7 +171,7 @@ class BlockLayout:
   def flush(self):
     if not self.line: 
       return
-    metrics = [font.metrics() for x, word, font, color in self.line]
+    metrics = [font.metrics() for _, _, font, _ in self.line]
     # Calculate the baseline for the line based on the maximum ascent
     max_ascent = max([metric["ascent"] for metric in metrics])
     baseline = self.cursor_y + 1.25 * max_ascent

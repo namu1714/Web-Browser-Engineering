@@ -86,17 +86,23 @@ class HTMLParser:
       self.unfinished.append(node)
   
   def get_attributes(self, text):
+    import re
+
+    # Extract tag name (first word)
     parts = text.split()
+    if not parts:
+      return "", {}
     tag = parts[0].casefold()
+
+    # Use regex to find attributes: name="value" or name='value' or name=value
     attributes = {}
-    for attrpair in parts[1:]:
-      if "=" in attrpair:
-        key, value = attrpair.split("=", 1)
-        if len(value) > 2 and value[0] in ["'", "\""]:
-          value = value[1:-1]
-        attributes[key.casefold()] = value
-      else:
-        attributes[attrpair.casefold()] = ""
+    pattern = r'(\w+)=(?:"([^"]*)"|\'([^\']*)\'|(\S+))'
+    for match in re.finditer(pattern, text):
+      key = match.group(1).casefold()
+      # value is in group 2 (double quotes), 3 (single quotes), or 4 (unquoted)
+      value = match.group(2) or match.group(3) or match.group(4)
+      attributes[key] = value
+
     return tag, attributes
 
   def implicit_tags(self, tag):

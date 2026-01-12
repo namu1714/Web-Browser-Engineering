@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>!important Test</title>
+</head>
+<body>
+    <h1>CSS !important Test</h1>
+
+    <h2>1. Normal inline styles</h2>
+    <div style="color: red; background-color: lightblue; width: 300px; height: 100px;">
+        Normal red text on light blue background (300x100px)
+    </div>
+
+    <h2>2. With !important</h2>
+    <div style="color: blue !important; background-color: yellow !important; width: 250px !important; height: 80px !important;">
+        Blue !important text on yellow !important background (250x80px !important)
+    </div>
+
+    <h2>3. Mixed !important and normal</h2>
+    <div style="width: 400px !important; height: 60px; background-color: lightgreen !important; color: purple;">
+        Width: 400px !important, Height: 60px normal
+        Purple text, light green !important background
+    </div>
+
+    <h2>4. Multiple !important declarations</h2>
+    <div style="color: orange !important; background-color: pink !important;">
+        Orange !important text on pink !important background
+    </div>
+
+    <h2>5. Test parsing edge cases</h2>
+    <div style="width: 200px !important ; height: 150px  !important; color:green!important;">
+        Testing various spacing around !important
+    </div>
+</body>
+</html>
