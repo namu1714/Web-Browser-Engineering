@@ -11,15 +11,40 @@ class Browser:
   def __init__(self):
     self.window = tkinter.Tk()
 
-    self.width, self.height = WIDTH, HEIGHT
-    self.canvas = tkinter.Canvas(self.window, width=self.width, height=self.height, bg="white")
+    self.canvas = tkinter.Canvas(self.window, width=WIDTH, height=HEIGHT, bg="white")
     self.canvas.pack(fill="both", expand=True)
+
+    self.window.bind("<Down>", self.handle_down)
+    # self.window.bind("<Up>", self.handle_up) # implement later
+    self.window.bind("<Button-1>", self.handle_click)
+
+    self.tabs = []
+    self.active_tab = None
+
+  def handle_down(self, e):
+    self.active_tab.scrolldown()
+    self.draw()
+
+  def handle_click(self, e):
+    self.active_tab.click(e.x, e.y)
+    self.draw()
+
+  def draw(self):
+    self.active_tab.draw(self.canvas)
+
+  def new_tab(self, url):
+    new_tab = Tab()
+    new_tab.load(url)
+    self.active_tab = new_tab
+    self.tabs.append(new_tab)
+    self.draw()
+
+
+class Tab:
+  def __init__(self):
 
     self.scroll = 0
     self.max_scroll = 0
-    self.window.bind("<Down>", self.scrolldown)
-    self.window.bind("<Up>", self.scrollup)
-    self.window.bind("<Button-1>", self.click)
 
     self.url = None
     
@@ -48,34 +73,27 @@ class Browser:
     self.document.layout()
     self.display_list = []
     paint_tree(self.document, self.display_list)
+  
 
-    self.draw()
-
-  def draw(self):
-    self.canvas.delete("all")
+  def draw(self, canvas):
     for cmd in self.display_list:
       if cmd.top > self.scroll + HEIGHT:
         continue
       if cmd.bottom < self.scroll:
         continue
-      cmd.execute(self.scroll, self.canvas)
+      cmd.execute(self.scroll, canvas)
   
-  def scrolldown(self, e):
+  def scrolldown(self):
     max_y = max(self.document.height + 2*VSTEP - HEIGHT, 0)
     self.scroll = min(self.scroll + SCROLL_STEP, max_y)
-    self.draw()
 
   def scrollup(self, e):
     self.scroll -= SCROLL_STEP
     if self.scroll < 0:
       self.scroll = 0
-    self.draw()
   
-  def click(self, e):
-    print("clicked at", e.x, e.y)
-    x, y = e.x, e.y
+  def click(self, x, y):
     y += self.scroll
-
     objs = [obj for obj in tree_to_list(self.document, [])
             if obj.x <= x < obj.x + obj.width
             and obj.y <= y < obj.y + obj.height]
