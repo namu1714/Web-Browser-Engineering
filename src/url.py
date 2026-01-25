@@ -17,6 +17,15 @@ class URL:
     if ":" in self.host:
       self.host, port = self.host.split(":", 1)
       self.port = int(port)
+
+  def __str__(self):
+    port_part = ":" + str(self.port)
+    if self.scheme == "https" and self.port == 443:
+      port_part = ""
+    if self.scheme == "http" and self.port == 80:
+      port_part = ""
+    return self.scheme + "://" + self.host + port_part + self.path
+  
   
   def request(self):
     s = socket.socket(
@@ -38,12 +47,9 @@ class URL:
     response = s.makefile("r", encoding="utf8", newline="\r\n")
     statusline = response.readline()
 
-    """ debug print
     version, status, explanation = statusline.split(" ", 2)
-    print("Version:", version)
+    print("Request URL:", str(self))  
     print("Status:", status)
-    print("Explanation:", explanation)
-    """
 
     response_headers = {}
     while True:
