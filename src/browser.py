@@ -143,16 +143,23 @@ class Chrome:
   def keypress(self, char):
     if self.focus == "address bar":
       self.address_bar += char
+      return True
+    return False
   
   def backspace(self):
     if self.focus == "address bar":
       if len(self.address_bar) > 0:
         self.address_bar = self.address_bar[:-1]
+        return True
+    return False
   
   def enter(self):
     if self.focus == "address bar":
       self.browser.active_tab.load(URL(self.address_bar))
       self.focus = None
+  
+  def blur(self):
+    self.focus = None
     
 
 # A simple browser with tabs
@@ -184,8 +191,11 @@ class Browser:
 
   def handle_click(self, e):
     if e.y < self.chrome.bottom:
+      self.focus = None
       self.chrome.click(e.x, e.y)
     else:
+      self.focus = "content"
+      self.chrome.blur()
       tab_y = e.y - self.chrome.bottom
       self.active_tab.click(e.x, tab_y)
     self.draw()
@@ -193,8 +203,11 @@ class Browser:
   def handle_key(self, e):
     if len(e.char) == 0: return
     if not (0x20 <= ord(e.char) <= 0x7f): return
-    self.chrome.keypress(e.char)
-    self.draw()
+    if self.chrome.keypress(e.char):
+      self.draw()
+    elif self.focus == "content":
+      self.active_tab.keypress(e.char)
+      self.draw()
 
   def handle_enter(self, e):
     self.chrome.enter()
@@ -225,14 +238,16 @@ class Tab:
     self.url = None
     self.tab_height = tab_height
     self.history = []
+    self.focus = None
     
   def load(self, url):
     self.url = url
     self.history.append(url)
     body = url.request()
-    self.nodes = HTMLParser(body).parse()
 
-    rules = DEFAULT_STYLE_SHEET.copy()
+    self.nodes = HTMLParser(body).parse()
+    self.rules = DEFAULT_STYLE_SHEET.copy()
+
     links = [node.attributes["href"]
              for node in tree_to_list(self.nodes, [])
              if isinstance(node, Element)
@@ -245,9 +260,12 @@ class Tab:
         body = style_url.request()
       except:
         continue
-      rules.extend(CSSParser(body).parse())
+      self.rules.extend(CSSParser(body).parse())
 
-    style(self.nodes, sorted(rules, key=cascade_priority))
+    self.render()
+
+  def render(self):
+    style(self.nodes, sorted(self.rules, key=cascade_priority))
     self.document = DocumentLayout(self.nodes)
     self.document.layout()
     self.display_list = []
@@ -272,6 +290,10 @@ class Tab:
       self.scroll = 0
   
   def click(self, x, y):
+    # 이전 focus 해제
+    if self.focus:
+      self.focus.is_focused = False
+    self.focus = None
     y += self.scroll
     objs = [obj for obj in tree_to_list(self.document, [])
             if obj.x <= x < obj.x + obj.width
@@ -286,6 +308,13 @@ class Tab:
         url = self.url.resolve(elt.attributes["href"])
         self.load(url)
         return
+      elif elt.tag == "input":
+        elt.attributes["value"] = ""
+        if self.focus:
+          self.focus.is_focused = False
+        self.focus = elt
+        elt.is_focused = True
+        return self.render()
       elt = elt.parent
   
   def go_back(self):
@@ -293,6 +322,11 @@ class Tab:
       self.history.pop()
       back = self.history.pop()
       self.load(back)
+
+  def keypress(self, char):
+    if self.focus:
+      self.focus.attributes["value"] += char
+      self.render()
 
 
 def paint_tree(layout_object, display_list):

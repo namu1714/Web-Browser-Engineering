@@ -288,6 +288,10 @@ class InputLayout:
     cmds.append(
       DrawText(self.x, self.y, text, self.font, color)
     )
+    if self.node.is_focused == True:
+      cx = self.x + self.font.measure(text)
+      cmds.append(DrawLine(cx, self.y, cx, self.y + self.height, "black", 1))
+
     return cmds
   
   def should_paint(self):
