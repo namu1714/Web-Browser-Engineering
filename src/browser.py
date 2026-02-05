@@ -1,4 +1,5 @@
 import tkinter
+import urllib.parse
 from parser import Element, HTMLParser, Text
 
 from css import CSSParser, cascade_priority, style
@@ -240,10 +241,10 @@ class Tab:
     self.history = []
     self.focus = None
     
-  def load(self, url):
+  def load(self, url, payload=None):
     self.url = url
     self.history.append(url)
-    body = url.request()
+    body = url.request(payload)
 
     self.nodes = HTMLParser(body).parse()
     self.rules = DEFAULT_STYLE_SHEET.copy()
@@ -315,7 +316,27 @@ class Tab:
         self.focus = elt
         elt.is_focused = True
         return self.render()
+      elif elt.tag == "button":
+        while elt:
+          if elt.tag == "form" and "action" in elt.attributes:
+            return self.submit_form(elt)
+          elt = elt.parent
       elt = elt.parent
+
+  def submit_form(self, elt):
+    inputs = [node for node in tree_to_list(elt, [])
+              if isinstance(node, Element)
+              and node.tag == "input"
+              and "name" in node.attributes]
+    body = ""
+    for input in inputs:
+      name = urllib.parse.quote(input.attributes["name"])
+      value = urllib.parse.quote(input.attributes.get("value", ""))
+      body += "&" + name + "=" + value
+    body = body[1:]
+
+    url = self.url.resolve(elt.attributes["action"])
+    self.load(url, body)
   
   def go_back(self):
     if len(self.history) > 1:
